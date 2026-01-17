@@ -17,6 +17,9 @@ CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.guilds = True
+intents.guild_messages = True
+intents.guild_reactions = True
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 DB_FILE = 'user_data.json'
@@ -54,47 +57,51 @@ async def on_message(message):
     if message.author == bot.user:
         return
     
-    # Help system commands (handle first to prevent command processing)
-    if message.content.startswith('!ask'):
-        await help_system.ask_question(message)
-        return
-    elif message.content.startswith('!solve'):
-        await help_system.solve_question(message)
-        return
-    elif message.content.startswith('!code'):
-        await help_system.share_code(message)
-        return
-    elif message.content == '!questions':
-        await help_system.show_questions(message)
-        return
-    elif message.content == '!helpers':
-        await help_system.show_helpers(message)
-        return
-    elif message.content == '!helpme':
-        await help_system.show_help_commands(message)
-        return
-    
-    # Original commands
-    elif message.content.startswith('!register'):
-        await user_commands.register_user(message)
-        return
-    elif message.content == '!mystatus':
-        await user_commands.show_status(message)
-        return
-    elif message.content == '!leaderboard':
-        await user_commands.show_leaderboard(message)
-        return
-    elif message.content == '!progress':
-        await user_commands.show_progress(message)
-        return
-    elif message.content == '!stats':
-        await user_commands.show_stats(message)
-        return
-    elif message.content == '!unregister':
-        await user_commands.unregister_user(message)
-        return
-    
-    await bot.process_commands(message)
+    try:
+        # Help system commands (handle first to prevent command processing)
+        if message.content.startswith('!ask'):
+            await help_system.ask_question(message)
+            return
+        elif message.content.startswith('!solve'):
+            await help_system.solve_question(message)
+            return
+        elif message.content.startswith('!code'):
+            await help_system.share_code(message)
+            return
+        elif message.content == '!questions':
+            await help_system.show_questions(message)
+            return
+        elif message.content == '!helpers':
+            await help_system.show_helpers(message)
+            return
+        elif message.content == '!helpme':
+            await help_system.show_help_commands(message)
+            return
+        
+        # Original commands
+        elif message.content.startswith('!register'):
+            await user_commands.register_user(message)
+            return
+        elif message.content == '!mystatus':
+            await user_commands.show_status(message)
+            return
+        elif message.content == '!leaderboard':
+            await user_commands.show_leaderboard(message)
+            return
+        elif message.content == '!progress':
+            await user_commands.show_progress(message)
+            return
+        elif message.content == '!stats':
+            await user_commands.show_stats(message)
+            return
+        elif message.content == '!unregister':
+            await user_commands.unregister_user(message)
+            return
+        
+        await bot.process_commands(message)
+    except Exception as e:
+        print(f"Error in on_message: {e}")
+        await message.channel.send("An error occurred. Please try again.")
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -202,5 +209,10 @@ async def daily_check_loop():
 async def before_daily_check():
     await bot.wait_until_ready()
 
-keep_alive()
-bot.run(TOKEN)
+try:
+    keep_alive()
+    bot.run(TOKEN)
+except Exception as e:
+    print(f"Bot crashed: {e}")
+    import traceback
+    traceback.print_exc()
