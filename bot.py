@@ -170,9 +170,9 @@ async def on_message(message):
             await user_commands.show_status(message)
         elif msg == '!leaderboard':
             await user_commands.show_leaderboard(message)
-        elif msg == '!progress':       
+        elif msg == '!progress':        
             await user_commands.show_progress(message)
-        elif msg == '!stats':          
+        elif msg == '!stats':           
             await user_commands.show_stats(message)
         elif msg == '!help':
             await user_commands.show_help(message.channel)
@@ -191,19 +191,13 @@ async def on_message(message):
         elif msg == '!helpme':
             await help_system.show_help_commands(message)
             
-        # --- 4. Fallback ---
+        # --- 4. Fallback (Required for @bot.command decorators to work) ---
         else:
             await bot.process_commands(message)
             
     except Exception as e:
         print(f"Error processing command: {e}")
         await message.channel.send("⚠️ An internal error occurred.")
-
-# --- Admin Commands ---
-@bot.command()
-async def force_check(ctx):
-    """Manual trigger for daily check"""
-    await run_check_logic(ctx.channel)
 
 # --- Scheduled Task ---
 @tasks.loop(minutes=1)
