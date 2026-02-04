@@ -217,6 +217,26 @@ async def daily_check_loop():
         channel = bot.get_channel(CHANNEL_ID)
         if channel: await run_check_logic(channel)
 
+# --- Admin & Utility Commands ---
+
+@bot.command()
+async def backup(ctx):
+    """Sends a copy of the user database file"""
+    if not os.path.exists(DB_FILE):
+        await ctx.send("⚠️ No database file found yet (no users registered).")
+        return
+    
+    try:
+        # Send the file to the channel
+        await ctx.send("📦 **Here is your user data backup:**", file=discord.File(DB_FILE))
+    except Exception as e:
+        await ctx.send(f"❌ Error creating backup: {e}")
+
+@bot.command()
+async def force_check(ctx):
+    """Manual trigger for daily check"""
+    await run_check_logic(ctx.channel)
+
 # --- Entry Point ---
 if __name__ == "__main__":
     bot.run(TOKEN)
