@@ -1,15 +1,19 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Configure the API key (Get this from https://aistudio.google.com/)
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+# Initialize the Client (New Library Syntax)
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# --- MODEL CONFIGURATION ---
+# Using the specific model name you requested
+MODEL_NAME = "gemini-3-flash-preview"
 
 # --- SMART SYSTEM PROMPT ---
-# This prompt tells the AI to behave differently based on the TOPIC.
 SYSTEM_INSTRUCTION = """
 You are a helpful Discord assistant called 'Ghost Squad AI'.
 
@@ -18,38 +22,38 @@ Your behavior depends on the user's question:
 1. **IF the user asks about LeetCode problems, Algorithms, Data Structures, or Homework:**
    - You must **NEVER** provide the full solution code (no Python/C++/Java blocks for the solution).
    - Instead, explain the **logic**, provide **pseudocode**, or give **hints**.
-   - Your goal is to teach them how to think, not copy-paste the answer.
 
 2. **IF the user asks anything else (General chat, simple syntax, jokes, unrelated topics):**
    - Answer normally. 
    - You **ARE ALLOWED** to write code for general examples (e.g., "How do I print in Python?", "Write a script to ping a server").
-   - Be friendly, concise, and helpful.
 
 **Summary:** - Solving "Two Sum"? -> NO CODE. Explain Logic.
 - "How to use a for loop"? -> CODE OKAY.
 - "Tell me a joke"? -> NORMAL CHAT.
 """
 
-# Initialize the model with the smart instructions
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash", 
-    system_instruction=SYSTEM_INSTRUCTION
-)
-
 async def get_ai_response(user_query):
     """
-    Sends the user's text to the AI and gets a response 
-    following the rules defined above.
+    Sends the user's text to the AI using the new google-genai library.
     """
     try:
         if not user_query:
             return "I'm listening! What do you need help with?"
 
-        # Generate the response
-        response = model.generate_content(user_query)
+        # Generate content using the new Client syntax
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION
+            ),
+            contents=user_query
+        )
         
         # Return the text
-        return response.text.strip()
+        if response.text:
+            return response.text.strip()
+        else:
+            return "I couldn't generate a response. (Empty response from API)"
         
     except Exception as e:
         print(f"AI Error: {e}")
