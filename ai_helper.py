@@ -1,50 +1,56 @@
-from google import genai
-from google.genai import types
 import os
+import google.generativeai as genai
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
-# --- CONFIGURATION ---
-API_KEY = os.getenv("GEMINI_API_KEY")
-# Using the specific model version you confirmed works
-MODEL_NAME = "gemini-3-flash-preview"
+# Configure the API key (Get this from https://aistudio.google.com/)
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Initialize Client
-try:
-    client = genai.Client(api_key=API_KEY)
-except Exception as e:
-    print(f"❌ Error initializing AI Client: {e}")
-    client = None
+# --- SMART SYSTEM PROMPT ---
+# This prompt tells the AI to behave differently based on the TOPIC.
+SYSTEM_INSTRUCTION = """
+You are a helpful Discord assistant called 'Ghost Squad AI'.
 
-# Strict Tutor Instructions
-SYSTEM_PROMPT = """
-You are a LeetCode algorithmic tutor. The user will send a raw query containing a LeetCode problem name and a question.
-Your Task:
-1. Identify the LeetCode problem name from the user's text.
-2. Answer the user's specific question about that problem.
-3. NEVER provide full code solutions. Use pseudocode if needed.
-4. If the problem name is unclear, ask the user to specify it.
-5. Format your response nicely with Markdown.
+Your behavior depends on the user's question:
+
+1. **IF the user asks about LeetCode problems, Algorithms, Data Structures, or Homework:**
+   - You must **NEVER** provide the full solution code (no Python/C++/Java blocks for the solution).
+   - Instead, explain the **logic**, provide **pseudocode**, or give **hints**.
+   - Your goal is to teach them how to think, not copy-paste the answer.
+
+2. **IF the user asks anything else (General chat, simple syntax, jokes, unrelated topics):**
+   - Answer normally. 
+   - You **ARE ALLOWED** to write code for general examples (e.g., "How do I print in Python?", "Write a script to ping a server").
+   - Be friendly, concise, and helpful.
+
+**Summary:** - Solving "Two Sum"? -> NO CODE. Explain Logic.
+- "How to use a for loop"? -> CODE OKAY.
+- "Tell me a joke"? -> NORMAL CHAT.
 """
 
-async def get_hint(user_query):
-    if not client:
-        return "⚠️ **AI Error:** API Key missing or Client failed to initialize."
+# Initialize the model with the smart instructions
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash", 
+    system_instruction=SYSTEM_INSTRUCTION
+)
 
+async def get_ai_response(user_query):
+    """
+    Sends the user's text to the AI and gets a response 
+    following the rules defined above.
+    """
     try:
-        # Construct the full prompt
-        full_prompt = f"{SYSTEM_PROMPT}\n\nUser Query: '{user_query}'\n\nProvide a hint:"
+        if not user_query:
+            return "I'm listening! What do you need help with?"
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=full_prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.7
-            )
-        )
-        return response.text
-            
+        # Generate the response
+        response = model.generate_content(user_query)
+        
+        # Return the text
+        return response.text.strip()
+        
     except Exception as e:
-        error_msg = str(e)
-        return f"⚠️ **AI Error:** Connection to model '{MODEL_NAME}' failed. ({error_msg})"
+        print(f"AI Error: {e}")
+        return "My brain is disconnected right now... try again later! 🔌"
