@@ -1,0 +1,25 @@
+# render.yaml — Ghost Squad Bot deployment on Render
+# Docs: https://render.com/docs/render-yaml
+
+services:
+  - type: web
+    name: ghost-squad-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    # Single process: runs the Discord bot AND serves the Flask web app
+    startCommand: python app.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false          # Set in Render dashboard → Environment
+      - key: DISCORD_CHANNEL_ID
+        sync: false
+      - key: PLACEMENT_CHANNEL_ID
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PORT
+        value: 10000         # Render assigns this automatically — override if needed
+    # Render's health check — pings the public site
+    healthCheckPath: /
