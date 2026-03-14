@@ -1,7 +1,3 @@
-"""
-cogs/user_commands.py — LeetCode user registration and stats commands
-"""
-
 import discord
 from datetime import datetime
 
@@ -23,6 +19,15 @@ class UserCommands:
 
         username   = parts[1]
         discord_id = str(message.author.id)
+
+        # Prevent overwriting an existing registration
+        existing = self.db.get_user(discord_id)
+        if existing:
+            await message.channel.send(
+                f"You are already registered as `{existing['leetcode_username']}`. "
+                "Use `!unregister` first if you want to switch accounts."
+            )
+            return
 
         msg = await message.channel.send(f"Verifying `{username}` on LeetCode...")
         stats = get_user_stats(username)
