@@ -1,3 +1,7 @@
+"""
+cogs/user_commands.py — LeetCode user registration and stats commands
+"""
+
 import discord
 from datetime import datetime
 
